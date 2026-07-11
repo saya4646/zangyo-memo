@@ -1,0 +1,1417 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="残業メモ">
+  <meta name="color-scheme" content="light">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob: data:; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="theme-color" content="#1f6f5b">
+  <title>残業メモ</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --page: #f5f6f2;
+      --panel: #ffffff;
+      --panel-soft: #f9faf6;
+      --ink: #202327;
+      --muted: #66717b;
+      --line: #dfe3da;
+      --accent: #1f6f5b;
+      --accent-dark: #145947;
+      --accent-soft: #e5f1ec;
+      --warn: #a33f3f;
+      --blue: #325b91;
+      --shadow: 0 18px 38px rgba(27, 35, 38, 0.08);
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "YuGothic", "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+      background: var(--page);
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(180deg, rgba(229, 241, 236, 0.9), rgba(245, 246, 242, 0) 300px),
+        var(--page);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+      text-size-adjust: 100%;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    h1,
+    h2,
+    p {
+      margin: 0;
+    }
+
+    .app {
+      width: min(100%, 780px);
+      margin: 0 auto;
+      padding: max(16px, env(safe-area-inset-top)) 12px max(34px, env(safe-area-inset-bottom));
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 10px 2px 15px;
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      font-size: 0.76rem;
+      font-weight: 850;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      margin-top: 4px;
+      font-size: 1.86rem;
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      font-size: 1.06rem;
+      line-height: 1.25;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 8px;
+      flex: 0 0 auto;
+    }
+
+    .icon-button,
+    .period-button {
+      display: inline-grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.92);
+      color: var(--ink);
+      box-shadow: 0 8px 18px rgba(24, 32, 37, 0.06);
+      font-weight: 850;
+    }
+
+    .icon-button {
+      min-width: 48px;
+      height: 42px;
+      border-radius: 8px;
+      padding: 0 10px;
+      font-size: 0.9rem;
+    }
+
+    .period-button {
+      width: 44px;
+      height: 44px;
+      border-radius: 999px;
+      font-size: 1.3rem;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: var(--shadow);
+    }
+
+    .settings-panel,
+    .backup-panel {
+      margin-bottom: 12px;
+      padding: 14px;
+    }
+
+    .screen {
+      display: none;
+    }
+
+    .screen.is-active {
+      display: block;
+    }
+
+    .settings-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+    }
+
+    .label,
+    label span,
+    .period-label,
+    .stats span,
+    .record-pay,
+    .records-head span,
+    .small-note {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 850;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      outline: none;
+      font-size: 16px;
+    }
+
+    input,
+    select {
+      min-height: 44px;
+      padding: 0 12px;
+    }
+
+    /* iOS Safariはネイティブ外観のdate inputが幅指定に従わず親からはみ出すため無効化する */
+    input[type="date"] {
+      -webkit-appearance: none;
+      appearance: none;
+      display: flex;
+      align-items: center;
+      max-width: 100%;
+    }
+
+    input[type="date"]::-webkit-date-and-time-value {
+      text-align: left;
+    }
+
+    textarea {
+      min-height: 92px;
+      padding: 12px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus,
+    button:focus-visible {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(31, 111, 91, 0.13);
+      outline: none;
+    }
+
+    .money-input {
+      display: flex;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .money-input b {
+      padding-left: 12px;
+      color: var(--muted);
+      font-weight: 850;
+    }
+
+    .money-input input {
+      border: 0;
+      min-height: 42px;
+      box-shadow: none;
+    }
+
+    .summary {
+      padding: 16px;
+    }
+
+    .period-row {
+      display: grid;
+      grid-template-columns: 44px 1fr 44px;
+      gap: 12px;
+      align-items: center;
+      text-align: center;
+    }
+
+    .period-range {
+      margin-top: 5px;
+      font-size: 1.08rem;
+      font-weight: 850;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .stats article {
+      min-height: 92px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-soft);
+      padding: 14px;
+    }
+
+    .stats strong {
+      display: block;
+      margin-top: 10px;
+      font-size: clamp(1.32rem, 6.5vw, 2.18rem);
+      line-height: 1;
+      letter-spacing: 0;
+      word-break: keep-all;
+    }
+
+    .entry-panel,
+    .records-panel {
+      margin-top: 12px;
+    }
+
+    .entry-panel {
+      padding: 14px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 0.72fr;
+      gap: 12px;
+    }
+
+    .quick-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    .button,
+    .quick-row button,
+    .record-actions button {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      padding: 0 12px;
+      font-weight: 800;
+    }
+
+    .quick-row button {
+      padding: 6px 5px;
+      color: var(--accent-dark);
+      font-size: 0.82rem;
+      line-height: 1.25;
+      white-space: normal;
+    }
+
+    .utility-row,
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .utility-row {
+      flex-wrap: wrap;
+    }
+
+    .primary-button,
+    .secondary-button,
+    .danger-button,
+    .blue-button {
+      flex: 1;
+      min-height: 48px;
+      border-radius: 8px;
+      font-weight: 850;
+    }
+
+    .primary-button {
+      border: 0;
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .secondary-button {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+    }
+
+    .danger-button {
+      border: 1px solid rgba(163, 63, 63, 0.3);
+      background: #fff;
+      color: var(--warn);
+    }
+
+    .blue-button {
+      border: 1px solid rgba(50, 91, 145, 0.24);
+      background: #fff;
+      color: var(--blue);
+    }
+
+    .status {
+      min-height: 20px;
+      margin-top: 10px;
+      color: var(--accent-dark);
+      font-size: 0.84rem;
+      font-weight: 800;
+      line-height: 1.4;
+    }
+
+    .backup-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .backup-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .backup-actions .button {
+      min-height: 42px;
+      padding: 0 8px;
+    }
+
+    .records-panel {
+      overflow: hidden;
+    }
+
+    .records-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .empty {
+      padding: 24px 16px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .record-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .record-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .record-item:last-child {
+      border-bottom: 0;
+    }
+
+    .record-date {
+      font-weight: 850;
+    }
+
+    .record-memo {
+      margin-top: 5px;
+      color: #373c40;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .record-side {
+      min-width: 146px;
+      text-align: right;
+    }
+
+    .record-hours {
+      display: block;
+      font-size: 1rem;
+      line-height: 1.25;
+      word-break: keep-all;
+    }
+
+    .record-pay {
+      display: block;
+      margin-top: 4px;
+    }
+
+    .record-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 6px;
+      margin-top: 9px;
+    }
+
+    .record-actions button {
+      min-height: 32px;
+      padding: 0 9px;
+      font-size: 0.8rem;
+    }
+
+    .delete-record {
+      color: var(--warn);
+    }
+
+    .footer-note {
+      padding: 14px 4px 0;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    @media (max-width: 620px) {
+      .settings-grid,
+      .stats,
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .backup-actions {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .app {
+        padding-left: 10px;
+        padding-right: 10px;
+      }
+
+      .topbar {
+        align-items: center;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+      }
+
+      .top-actions {
+        flex-direction: row;
+        gap: 6px;
+      }
+
+      .icon-button {
+        min-width: 56px;
+        height: 40px;
+        padding: 0 12px;
+      }
+
+      .quick-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .record-item {
+        grid-template-columns: 1fr;
+      }
+
+      .record-side {
+        text-align: left;
+      }
+
+      .record-actions {
+        justify-content: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow" id="screenEyebrow">ローカル版</p>
+        <h1 id="screenTitle">残業メモ</h1>
+      </div>
+      <div class="top-actions">
+        <button class="icon-button" type="button" id="backButton" hidden>戻る</button>
+        <button class="icon-button" type="button" id="backupToggle" aria-controls="backupScreen">データ</button>
+        <button class="icon-button" type="button" id="settingsToggle" aria-controls="settingsScreen">設定</button>
+      </div>
+    </header>
+
+    <div class="screen" id="settingsScreen">
+    <section class="panel settings-panel" id="settingsPanel" aria-label="設定">
+      <div class="settings-grid">
+        <label>
+          <span>締め日</span>
+          <select id="closingDay"></select>
+        </label>
+        <label>
+          <span>時間単価</span>
+          <span class="money-input">
+            <b>円</b>
+            <input id="hourlyRate" inputmode="numeric" pattern="[0-9]*" type="number" min="0" step="1" autocomplete="off">
+          </span>
+        </label>
+      </div>
+      <div class="utility-row">
+        <button class="secondary-button" type="button" id="csvButton">CSV作成</button>
+        <button class="danger-button" type="button" id="clearButton">全削除</button>
+      </div>
+      <p class="status" id="settingsStatus" aria-live="polite"></p>
+    </section>
+    </div>
+
+    <div class="screen" id="backupScreen">
+    <section class="panel backup-panel" id="backupPanel" aria-label="バックアップ">
+      <div class="backup-grid">
+        <div class="backup-actions">
+          <button class="button" type="button" id="backupFileButton">データを書き出す</button>
+          <button class="button" type="button" id="restoreFileButton">データを読み込む</button>
+        </div>
+        <input id="restoreFileInput" type="file" accept="application/json,.json" hidden>
+        <p class="status" id="backupStatus" aria-live="polite"></p>
+      </div>
+    </section>
+    </div>
+
+    <div class="screen is-active" id="homeScreen">
+    <section class="panel summary" aria-label="残業集計">
+      <div class="period-row">
+        <button class="period-button" type="button" id="prevPeriod" aria-label="前の期間">‹</button>
+        <div>
+          <p class="period-label">対象期間</p>
+          <p class="period-range" id="periodRange"></p>
+        </div>
+        <button class="period-button" type="button" id="nextPeriod" aria-label="次の期間">›</button>
+      </div>
+      <div class="stats">
+        <article>
+          <span>累計時間</span>
+          <strong id="totalHours">0:00</strong>
+        </article>
+        <article>
+          <span>支給見込</span>
+          <strong id="estimatedPay">¥0</strong>
+        </article>
+      </div>
+      <div class="utility-row">
+        <button class="secondary-button" type="button" id="currentPeriod">今月に戻る</button>
+      </div>
+    </section>
+
+    <form class="panel entry-panel" id="entryForm">
+      <div class="form-grid">
+        <label>
+          <span>日付</span>
+          <input id="entryDate" type="date" required>
+        </label>
+        <label>
+          <span>残業時間</span>
+          <select id="entryHours" required>
+            <option value="">選択</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="quick-row" id="quickHours" aria-label="よく使う残業時間"></div>
+
+      <label>
+        <span>メモ</span>
+        <textarea id="entryMemo" rows="4" autocomplete="off"></textarea>
+      </label>
+
+      <div class="form-actions">
+        <button class="secondary-button" type="button" id="cancelEditButton" hidden>取消</button>
+        <button class="primary-button" type="submit" id="submitButton">記録する</button>
+      </div>
+      <p class="status" id="entryStatus" aria-live="polite"></p>
+    </form>
+
+    <section class="panel records-panel" aria-label="記録一覧">
+      <div class="records-head">
+        <h2>記録</h2>
+        <span id="recordCount">0件</span>
+      </div>
+      <div id="records"></div>
+    </section>
+
+    <p class="footer-note">このHTMLは外部通信を使いません。大事な記録は定期的にバックアップしてください。</p>
+    </div>
+  </main>
+
+  <script>
+    "use strict";
+
+    (function () {
+      var STORAGE_KEY = "zangyo-memo-local-v2";
+      var SETTINGS_KEY = "zangyo-memo-settings-v2";
+      var DB_NAME = "zangyo-memo-local-db";
+      var DB_VERSION = 1;
+      var STORE_NAME = "data";
+
+      var state = {
+        entries: [],
+        settings: {
+          closingDay: 15,
+          hourlyRate: 0
+        },
+        periodOffset: 0,
+        editingId: "",
+        view: "home",
+        db: null
+      };
+
+      var yenFormatter = new Intl.NumberFormat("ja-JP", {
+        style: "currency",
+        currency: "JPY",
+        maximumFractionDigits: 0
+      });
+
+      var weekdayFormatter = new Intl.DateTimeFormat("ja-JP", {
+        month: "numeric",
+        day: "numeric",
+        weekday: "short"
+      });
+
+      var els = {};
+
+      function getEl(id) {
+        return document.getElementById(id);
+      }
+
+      function pad(value) {
+        return String(value).padStart(2, "0");
+      }
+
+      function todayInputValue() {
+        var date = new Date();
+        return date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate());
+      }
+
+      function parseDate(value) {
+        var parts = String(value || "").split("-").map(Number);
+        return new Date(parts[0], parts[1] - 1, parts[2]);
+      }
+
+      function dateKey(date) {
+        return date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate());
+      }
+
+      function addMonths(date, months) {
+        return new Date(date.getFullYear(), date.getMonth() + months, Math.min(date.getDate(), 28));
+      }
+
+      function getPeriodForDate(date, closingDay) {
+        var year = date.getFullYear();
+        var month = date.getMonth();
+        var day = date.getDate();
+        var start;
+        var end;
+
+        if (day <= closingDay) {
+          start = new Date(year, month - 1, closingDay + 1);
+          end = new Date(year, month, closingDay);
+        } else {
+          start = new Date(year, month, closingDay + 1);
+          end = new Date(year, month + 1, closingDay);
+        }
+
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+        return { start: start, end: end };
+      }
+
+      function formatRange(period) {
+        return period.start.getFullYear() + "/" + (period.start.getMonth() + 1) + "/" + period.start.getDate() +
+          " から " +
+          period.end.getFullYear() + "/" + (period.end.getMonth() + 1) + "/" + period.end.getDate();
+      }
+
+      function formatHours(decimalHours) {
+        var totalMinutes = Math.round(Number(decimalHours || 0) * 60);
+        var hours = Math.floor(totalMinutes / 60);
+        var minutes = totalMinutes % 60;
+        return hours + ":" + pad(minutes);
+      }
+
+      function formatDurationJapanese(decimalHours) {
+        var totalMinutes = Math.round(Number(decimalHours || 0) * 60);
+        var hours = Math.floor(totalMinutes / 60);
+        var minutes = totalMinutes % 60;
+        return hours + "時間" + minutes + "分";
+      }
+
+      function formatInputChoice(decimalHours) {
+        var totalMinutes = Math.round(Number(decimalHours || 0) * 60);
+        var hours = Math.floor(totalMinutes / 60);
+        var minutes = totalMinutes % 60;
+        var label = "";
+        var decimal = String(Number(Number(decimalHours || 0).toFixed(2)));
+
+        if (hours > 0) {
+          label += hours + "時間";
+        }
+        if (minutes > 0) {
+          label += minutes + "分";
+        }
+        if (!label) {
+          label = "0分";
+        }
+        return label + "（" + decimal + "）";
+      }
+
+      function roundToQuarter(value) {
+        var numeric = Number(value || 0);
+        if (!Number.isFinite(numeric)) {
+          return 0;
+        }
+        return Math.round(numeric * 4) / 4;
+      }
+
+      function makeId() {
+        if (window.crypto && typeof window.crypto.randomUUID === "function") {
+          return window.crypto.randomUUID();
+        }
+        return String(Date.now()) + "-" + Math.random().toString(16).slice(2);
+      }
+
+      function normalizeSettings(value) {
+        var source = value || {};
+        var closingDay = Number(source.closingDay || 15);
+        var hourlyRate = Number(source.hourlyRate || 0);
+        if (!Number.isFinite(closingDay)) {
+          closingDay = 15;
+        }
+        if (!Number.isFinite(hourlyRate)) {
+          hourlyRate = 0;
+        }
+        return {
+          closingDay: Math.min(28, Math.max(1, Math.round(closingDay))),
+          hourlyRate: Math.max(0, Math.round(hourlyRate))
+        };
+      }
+
+      function normalizeEntry(value) {
+        if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(String(value.date || ""))) {
+          return null;
+        }
+
+        var hours = roundToQuarter(value.hours);
+        if (hours <= 0) {
+          return null;
+        }
+
+        var now = new Date().toISOString();
+        return {
+          id: String(value.id || makeId()),
+          date: String(value.date),
+          hours: hours,
+          memo: String(value.memo || "").trim(),
+          createdAt: String(value.createdAt || now),
+          updatedAt: String(value.updatedAt || now)
+        };
+      }
+
+      function readJson(key, fallback) {
+        try {
+          var raw = window.localStorage.getItem(key);
+          return raw ? JSON.parse(raw) : fallback;
+        } catch (error) {
+          return fallback;
+        }
+      }
+
+      function writeJson(key, value) {
+        try {
+          window.localStorage.setItem(key, JSON.stringify(value));
+        } catch (error) {
+        }
+      }
+
+      function openDb() {
+        return new Promise(function (resolve, reject) {
+          if (!window.indexedDB) {
+            reject(new Error("IndexedDB unavailable"));
+            return;
+          }
+
+          var request = window.indexedDB.open(DB_NAME, DB_VERSION);
+          request.onupgradeneeded = function () {
+            var db = request.result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+              db.createObjectStore(STORE_NAME);
+            }
+          };
+          request.onsuccess = function () {
+            resolve(request.result);
+          };
+          request.onerror = function () {
+            reject(request.error || new Error("IndexedDB open failed"));
+          };
+        });
+      }
+
+      function dbGet(key) {
+        return new Promise(function (resolve) {
+          if (!state.db) {
+            resolve(undefined);
+            return;
+          }
+          try {
+            var transaction = state.db.transaction(STORE_NAME, "readonly");
+            var store = transaction.objectStore(STORE_NAME);
+            var request = store.get(key);
+            request.onsuccess = function () {
+              resolve(request.result);
+            };
+            request.onerror = function () {
+              resolve(undefined);
+            };
+          } catch (error) {
+            resolve(undefined);
+          }
+        });
+      }
+
+      function dbSet(key, value) {
+        return new Promise(function (resolve) {
+          if (!state.db) {
+            resolve();
+            return;
+          }
+          try {
+            var transaction = state.db.transaction(STORE_NAME, "readwrite");
+            var store = transaction.objectStore(STORE_NAME);
+            var request = store.put(value, key);
+            request.onsuccess = function () {
+              resolve();
+            };
+            request.onerror = function () {
+              resolve();
+            };
+          } catch (error) {
+            resolve();
+          }
+        });
+      }
+
+      function persist() {
+        writeJson(STORAGE_KEY, state.entries);
+        writeJson(SETTINGS_KEY, state.settings);
+        return Promise.all([
+          dbSet(STORAGE_KEY, state.entries),
+          dbSet(SETTINGS_KEY, state.settings)
+        ]);
+      }
+
+      function setStatus(element, message) {
+        element.textContent = message || "";
+      }
+
+      function currentPeriod() {
+        return getPeriodForDate(addMonths(new Date(), state.periodOffset), state.settings.closingDay);
+      }
+
+      function getVisibleEntries() {
+        var period = currentPeriod();
+        return state.entries
+          .filter(function (entry) {
+            var date = parseDate(entry.date);
+            return date >= period.start && date <= period.end;
+          })
+          .sort(function (a, b) {
+            return b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt);
+          });
+      }
+
+      function totalVisibleHours(entries) {
+        return entries.reduce(function (sum, entry) {
+          return sum + entry.hours;
+        }, 0);
+      }
+
+      function escapeHtml(value) {
+        return String(value == null ? "" : value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      function csvEscape(value) {
+        return '"' + String(value == null ? "" : value).replace(/"/g, '""') + '"';
+      }
+
+      function downloadFile(filename, type, content) {
+        var blob = new Blob([content], { type: type });
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.setTimeout(function () {
+          URL.revokeObjectURL(url);
+        }, 60000);
+      }
+
+      function makeBackupPayload() {
+        return {
+          app: "残業メモ ローカル版",
+          version: 2,
+          exportedAt: new Date().toISOString(),
+          settings: state.settings,
+          entries: state.entries
+        };
+      }
+
+      function makeBackupText() {
+        return JSON.stringify(makeBackupPayload(), null, 2);
+      }
+
+      function restoreFromObject(data) {
+        if (!data || !Array.isArray(data.entries)) {
+          throw new Error("Invalid backup");
+        }
+        state.entries = data.entries.map(normalizeEntry).filter(Boolean);
+        state.settings = normalizeSettings(data.settings);
+        state.periodOffset = 0;
+        state.editingId = "";
+        syncSettingsInputs();
+        resetForm();
+        return persist().then(function () {
+          render();
+        });
+      }
+
+      function syncSettingsInputs() {
+        els.closingDay.value = String(state.settings.closingDay);
+        els.hourlyRate.value = state.settings.hourlyRate ? String(state.settings.hourlyRate) : "";
+      }
+
+      function resetForm() {
+        state.editingId = "";
+        els.entryDate.value = todayInputValue();
+        els.entryHours.value = "";
+        els.entryMemo.value = "";
+        els.cancelEditButton.hidden = true;
+        els.submitButton.textContent = "記録する";
+      }
+
+      function renderRecords(visibleEntries) {
+        els.recordCount.textContent = visibleEntries.length + "件";
+
+        if (!visibleEntries.length) {
+          els.records.innerHTML = '<p class="empty">この期間の記録はありません。</p>';
+          return;
+        }
+
+        var html = '<ul class="record-list">';
+        visibleEntries.forEach(function (entry) {
+          var pay = Math.round(entry.hours * state.settings.hourlyRate);
+          var dateLabel = weekdayFormatter.format(parseDate(entry.date));
+          html +=
+            '<li class="record-item">' +
+              '<div>' +
+                '<p class="record-date">' + escapeHtml(dateLabel) + '</p>' +
+                '<p class="record-memo">' + escapeHtml(entry.memo || "メモなし") + '</p>' +
+              '</div>' +
+              '<div class="record-side">' +
+                '<strong class="record-hours">' + escapeHtml(formatInputChoice(entry.hours)) + '</strong>' +
+                '<span class="record-pay">' + escapeHtml(yenFormatter.format(pay)) + '</span>' +
+                '<div class="record-actions">' +
+                  '<button type="button" data-edit="' + escapeHtml(entry.id) + '">編集</button>' +
+                  '<button class="delete-record" type="button" data-delete="' + escapeHtml(entry.id) + '">削除</button>' +
+                '</div>' +
+              '</div>' +
+            '</li>';
+        });
+        html += "</ul>";
+        els.records.innerHTML = html;
+      }
+
+      function render() {
+        var period = currentPeriod();
+        var visibleEntries = getVisibleEntries();
+        var totalHours = totalVisibleHours(visibleEntries);
+        var estimatedPay = Math.round(totalHours * state.settings.hourlyRate);
+
+        els.periodRange.textContent = formatRange(period);
+        els.totalHours.textContent = formatDurationJapanese(totalHours);
+        els.estimatedPay.textContent = yenFormatter.format(estimatedPay);
+        renderRecords(visibleEntries);
+      }
+
+      function buildOptions() {
+        for (var day = 1; day <= 28; day += 1) {
+          var option = document.createElement("option");
+          option.value = String(day);
+          option.textContent = day + "日";
+          els.closingDay.appendChild(option);
+        }
+
+        for (var index = 1; index <= 48; index += 1) {
+          var minutes = index * 15;
+          var hours = minutes / 60;
+          var hourOption = document.createElement("option");
+          hourOption.value = String(hours);
+          hourOption.textContent = formatInputChoice(hours);
+          els.entryHours.appendChild(hourOption);
+        }
+
+        [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3].forEach(function (hours) {
+          var button = document.createElement("button");
+          button.type = "button";
+          button.textContent = formatInputChoice(hours);
+          button.addEventListener("click", function () {
+            els.entryHours.value = String(hours);
+          });
+          els.quickHours.appendChild(button);
+        });
+      }
+
+      function setView(view) {
+        state.view = view;
+        els.homeScreen.classList.toggle("is-active", view === "home");
+        els.settingsScreen.classList.toggle("is-active", view === "settings");
+        els.backupScreen.classList.toggle("is-active", view === "backup");
+
+        els.backButton.hidden = view === "home";
+        els.backupToggle.hidden = view !== "home";
+        els.settingsToggle.hidden = view !== "home";
+
+        if (view === "settings") {
+          els.screenEyebrow.textContent = "残業メモ";
+          els.screenTitle.textContent = "設定";
+        } else if (view === "backup") {
+          els.screenEyebrow.textContent = "残業メモ";
+          els.screenTitle.textContent = "保存と復元";
+        } else {
+          els.screenEyebrow.textContent = "ローカル版";
+          els.screenTitle.textContent = "残業メモ";
+        }
+
+        window.scrollTo(0, 0);
+      }
+
+      function wireEvents() {
+        els.settingsToggle.addEventListener("click", function () {
+          setView("settings");
+        });
+
+        els.backupToggle.addEventListener("click", function () {
+          setView("backup");
+        });
+
+        els.backButton.addEventListener("click", function () {
+          setView("home");
+        });
+
+        els.closingDay.addEventListener("change", function () {
+          state.settings = normalizeSettings({
+            closingDay: Number(els.closingDay.value),
+            hourlyRate: state.settings.hourlyRate
+          });
+          state.periodOffset = 0;
+          persist().then(function () {
+            render();
+            setStatus(els.settingsStatus, "設定を保存しました。");
+          });
+        });
+
+        els.hourlyRate.addEventListener("input", function () {
+          state.settings = normalizeSettings({
+            closingDay: state.settings.closingDay,
+            hourlyRate: Number(els.hourlyRate.value || 0)
+          });
+          persist().then(function () {
+            render();
+            setStatus(els.settingsStatus, "設定を保存しました。");
+          });
+        });
+
+        els.prevPeriod.addEventListener("click", function () {
+          state.periodOffset -= 1;
+          render();
+        });
+
+        els.nextPeriod.addEventListener("click", function () {
+          state.periodOffset += 1;
+          render();
+        });
+
+        els.currentPeriod.addEventListener("click", function () {
+          state.periodOffset = 0;
+          render();
+        });
+
+        els.entryForm.addEventListener("submit", function (event) {
+          event.preventDefault();
+          var existing = state.entries.find(function (entry) {
+            return entry.id === state.editingId;
+          });
+          var nextEntry = normalizeEntry({
+            id: state.editingId || makeId(),
+            date: els.entryDate.value,
+            hours: Number(els.entryHours.value),
+            memo: els.entryMemo.value,
+            createdAt: existing ? existing.createdAt : new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          });
+
+          if (!nextEntry) {
+            setStatus(els.entryStatus, "日付と残業時間を選択してください。");
+            return;
+          }
+
+          var wasEditing = Boolean(state.editingId);
+
+          if (wasEditing) {
+            state.entries = state.entries.map(function (entry) {
+              return entry.id === state.editingId ? nextEntry : entry;
+            });
+          } else {
+            state.entries = state.entries.concat(nextEntry);
+          }
+
+          persist().then(function () {
+            resetForm();
+            render();
+            setStatus(els.entryStatus, wasEditing ? "更新しました。" : "記録しました。");
+          });
+        });
+
+        els.cancelEditButton.addEventListener("click", function () {
+          resetForm();
+          setStatus(els.entryStatus, "");
+        });
+
+        els.records.addEventListener("click", function (event) {
+          var target = event.target;
+          if (!(target instanceof HTMLElement)) {
+            return;
+          }
+
+          var editId = target.getAttribute("data-edit");
+          var deleteId = target.getAttribute("data-delete");
+
+          if (editId) {
+            var entry = state.entries.find(function (item) {
+              return item.id === editId;
+            });
+            if (!entry) {
+              return;
+            }
+            state.editingId = entry.id;
+            els.entryDate.value = entry.date;
+            els.entryHours.value = String(entry.hours);
+            els.entryMemo.value = entry.memo;
+            els.cancelEditButton.hidden = false;
+            els.submitButton.textContent = "更新する";
+            setStatus(els.entryStatus, "編集中です。");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }
+
+          if (deleteId) {
+            if (!window.confirm("この記録を削除しますか？")) {
+              return;
+            }
+            state.entries = state.entries.filter(function (entry) {
+              return entry.id !== deleteId;
+            });
+            persist().then(function () {
+              render();
+              setStatus(els.entryStatus, "削除しました。");
+            });
+          }
+        });
+
+        els.csvButton.addEventListener("click", function () {
+          var rows = [["日付", "残業時間", "残業時間 小数", "メモ", "支給見込"]];
+          state.entries
+            .slice()
+            .sort(function (a, b) {
+              return a.date.localeCompare(b.date);
+            })
+            .forEach(function (entry) {
+              rows.push([
+                entry.date,
+                formatHours(entry.hours),
+                String(entry.hours),
+                entry.memo,
+                String(Math.round(entry.hours * state.settings.hourlyRate))
+              ]);
+            });
+          var content = "\uFEFF" + rows.map(function (row) {
+            return row.map(csvEscape).join(",");
+          }).join("\n");
+          downloadFile("zangyo-memo.csv", "text/csv;charset=utf-8", content);
+          setStatus(els.settingsStatus, "CSVを作成しました。");
+        });
+
+        els.clearButton.addEventListener("click", function () {
+          if (!window.confirm("すべての記録を削除しますか？先にバックアップすることをおすすめします。")) {
+            return;
+          }
+          state.entries = [];
+          state.periodOffset = 0;
+          resetForm();
+          persist().then(function () {
+            render();
+            setStatus(els.settingsStatus, "すべての記録を削除しました。");
+          });
+        });
+
+        els.backupFileButton.addEventListener("click", function () {
+          var filename = "zangyo-memo-backup.json";
+          var text = makeBackupText();
+          downloadFile(filename, "application/json;charset=utf-8", text);
+          setStatus(els.backupStatus, "データを書き出しました。同じ場所に保存する場合は、端末側で置き換えを選んでください。");
+        });
+
+        els.restoreFileButton.addEventListener("click", function () {
+          els.restoreFileInput.click();
+        });
+
+        els.restoreFileInput.addEventListener("change", function () {
+          var file = els.restoreFileInput.files && els.restoreFileInput.files[0];
+          els.restoreFileInput.value = "";
+          if (!file) {
+            return;
+          }
+          if (!window.confirm("現在のデータを選択したファイルの内容で上書きします。よろしいですか？")) {
+            setStatus(els.backupStatus, "読み込みを取り消しました。");
+            return;
+          }
+          file.text().then(function (text) {
+            return restoreFromObject(JSON.parse(text));
+          }).then(function () {
+            setStatus(els.backupStatus, "データを読み込みました。");
+          }).catch(function () {
+            setStatus(els.backupStatus, "読み込めませんでした。書き出したJSONファイルか確認してください。");
+          });
+        });
+
+      }
+
+      function collectElements() {
+        [
+          "screenEyebrow",
+          "screenTitle",
+          "homeScreen",
+          "settingsScreen",
+          "backupScreen",
+          "backButton",
+          "backupToggle",
+          "settingsToggle",
+          "settingsPanel",
+          "backupPanel",
+          "closingDay",
+          "hourlyRate",
+          "csvButton",
+          "clearButton",
+          "settingsStatus",
+          "backupFileButton",
+          "restoreFileButton",
+          "restoreFileInput",
+          "backupStatus",
+          "prevPeriod",
+          "nextPeriod",
+          "periodRange",
+          "totalHours",
+          "estimatedPay",
+          "currentPeriod",
+          "entryForm",
+          "entryDate",
+          "entryHours",
+          "quickHours",
+          "entryMemo",
+          "cancelEditButton",
+          "submitButton",
+          "entryStatus",
+          "recordCount",
+          "records"
+        ].forEach(function (id) {
+          els[id] = getEl(id);
+        });
+      }
+
+      function init() {
+        collectElements();
+        buildOptions();
+        wireEvents();
+        resetForm();
+
+        if (navigator.storage && typeof navigator.storage.persist === "function") {
+          navigator.storage.persist().catch(function () {});
+        }
+
+        openDb().then(function (db) {
+          state.db = db;
+        }).catch(function () {
+          state.db = null;
+        }).then(function () {
+          return Promise.all([
+            dbGet(STORAGE_KEY),
+            dbGet(SETTINGS_KEY)
+          ]);
+        }).then(function (values) {
+          var savedEntries = values[0] || readJson(STORAGE_KEY, []);
+          var savedSettings = values[1] || readJson(SETTINGS_KEY, {});
+          if (!Array.isArray(savedEntries)) {
+            savedEntries = [];
+          }
+          state.entries = savedEntries.map(normalizeEntry).filter(Boolean);
+          state.settings = normalizeSettings(savedSettings);
+          syncSettingsInputs();
+          return persist();
+        }).then(function () {
+          render();
+          setStatus(els.entryStatus, "読み込みました。");
+        }).catch(function () {
+          state.entries = readJson(STORAGE_KEY, []).map(normalizeEntry).filter(Boolean);
+          state.settings = normalizeSettings(readJson(SETTINGS_KEY, {}));
+          syncSettingsInputs();
+          render();
+          setStatus(els.entryStatus, "読み込みました。");
+        });
+      }
+
+      document.addEventListener("DOMContentLoaded", init);
+    })();
+  </script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", function () {
+        navigator.serviceWorker.register("sw.js").catch(function () {});
+      });
+    }
+  </script>
+</body>
+</html>
