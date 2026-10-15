@@ -24,7 +24,8 @@ self.addEventListener("activate", function (event) {
   event.waitUntil(
     caches.keys().then(function (keys) {
       return Promise.all(keys.map(function (key) {
-        if (key !== CACHE_NAME) {
+        // 同じ住所のほかのアプリ（ゲット図鑑など）の保存分は消さない
+        if (key.indexOf("zangyo-memo-") === 0 && key !== CACHE_NAME) {
           return caches.delete(key);
         }
       }));
